@@ -106,7 +106,7 @@ FOR EACH ROW EXECUTE FUNCTION verificar_capacidade_assento();
 
 
 -------------------------------------------------------------------------------------------------
-
+/* testes
 -- Inserindo dados na tabela Cliente
 INSERT INTO Cliente (CPF, Nome, Endereco, Telefone, Email) VALUES
 ('12345678901', 'João Silva', 'Rua das Flores, 123', '11987654321', 'joao.silva@email.com'),
@@ -151,7 +151,7 @@ INSERT INTO Realizado_por (Placa, Origem, Destino) VALUES
 INSERT INTO Realizado_por (Placa, Origem, Destino) VALUES
 ('ABC5678', 'Rio de Janeiro', 'São Paulo');
 
-
+*/
 /*teste
 DELETE FROM compra 
 SELECT * FROM compra
