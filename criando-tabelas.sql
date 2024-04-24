@@ -12,9 +12,8 @@ CREATE TABLE Cliente (
 
 -- Criação da tabela Cidade
 CREATE TABLE Cidade (
-    Origem VARCHAR(100),
-    Destino VARCHAR(100),
-    PRIMARY KEY (Origem, Destino)
+    Nome_Cidade VARCHAR(100),
+    PRIMARY KEY (Nome_Cidade)
 );
 
 -- Criação da tabela Horario
@@ -26,12 +25,11 @@ CREATE TABLE Horario (
 
 -- Criação da tabela Rotas
 CREATE TABLE Rotas (
-    Origem VARCHAR(100),
-    Destino VARCHAR(100),
+    Nome_Cidade VARCHAR(100),
     Distancia DECIMAL(10,2) NOT NULL,
     Preco DECIMAL(10,2) NOT NULL ,
-    FOREIGN KEY (Origem, Destino) REFERENCES Cidade(Origem, Destino),
-    PRIMARY KEY (Origem, Destino)
+    FOREIGN KEY (Nome_Cidade) REFERENCES Cidade(Nome_Cidade),
+    PRIMARY KEY (Nome_Cidade)
 );
 
 -- Criação da tabela Veiculos
@@ -59,20 +57,18 @@ CREATE TABLE Compra (
 CREATE TABLE Possui (
     Data_Hora_Chegada TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     Data_Hora_Partida TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-	Origem VARCHAR(100) NOT NULL,
-    Destino VARCHAR(100) NOT NULL,
+	Nome_Cidade VARCHAR(100) NOT NULL,
     FOREIGN KEY (Data_Hora_Chegada, Data_Hora_Partida) REFERENCES Horario(Data_Hora_Chegada, Data_Hora_Partida),
-	FOREIGN KEY (Origem, Destino) REFERENCES Rotas(Origem, Destino),
-    PRIMARY KEY (Data_Hora_Chegada, Data_Hora_Partida, Origem, Destino)
+	FOREIGN KEY (Nome_Cidade) REFERENCES Rotas(Nome_Cidade),
+    PRIMARY KEY (Data_Hora_Chegada, Data_Hora_Partida, Nome_Cidade)
 );
 --Criação da tabela Realizado_por
 CREATE TABLE Realizado_por (
     Placa VARCHAR(10) NOT NULL,
-    Origem VARCHAR(100) NOT NULL,
-    Destino VARCHAR(100) NOT NULL,
+    Nome_Cidade VARCHAR(100) NOT NULL,
     FOREIGN KEY (Placa) REFERENCES Veiculos(Placa),
-    FOREIGN KEY (Origem, Destino) REFERENCES Rotas(Origem, Destino),
-	PRIMARY KEY (Placa, Origem, Destino)
+    FOREIGN KEY (Nome_Cidade) REFERENCES Rotas(Nome_Cidade),
+	PRIMARY KEY (Placa, Nome_Cidade)
 );
 
 CREATE OR REPLACE FUNCTION verificar_capacidade_assento() RETURNS TRIGGER AS $$
