@@ -64,7 +64,7 @@ for _ in range(5):
     modelo = fake.car_model()  
     ano = fake.random.randint(2010, 2023)
     status_vei = fake.random.choice(["disponivel", "em manutencao"])
-    capacidade = randint(1, 10)
+    capacidade = randint(1, 60)
     
     cur.execute("INSERT INTO Veiculos (Placa, Modelo, Ano, Status_vei, Capacidade) VALUES (%s, %s, %s, %s, %s)",
                 (placa, modelo, ano, status_vei, capacidade))
@@ -74,7 +74,7 @@ for _ in range(10):
     cpf = fake.unique.random_number(digits=11)
     data_hora_chegada = fake.future_datetime(end_date='+30d').strftime('%Y-%m-%d %H:%M:%S')
     data_hora_partida = fake.date_time_between(start_date=data_hora_chegada, end_date=data_hora_chegada).strftime('%Y-%m-%d %H:%M:%S')
-    assento = randint(1, 50)
+    assento = randint(1, 59)
     status_ag = fake.random.choice(["confirmado", "cancelado", "realizado"])
     
     try: #respeita a trigger verificar_capacidade_antes_insercao
