@@ -36,10 +36,8 @@ for _ in range(10):
 
 # Inserindo dados na tabela Cidade
 for _ in range(10):
-    origem = fake.city()
-    destino = fake.city()
-    
-    cur.execute("INSERT INTO Cidade (Origem, Destino) VALUES (%s, %s)", (origem, destino))
+    Nome_Cidade = fake.city()
+    cur.execute("INSERT INTO Cidade (Nome_Cidade) VALUES (%s)", (Nome_Cidade))
 
 # Inserindo dados na tabela Horario
 for _ in range(10):
@@ -51,12 +49,12 @@ for _ in range(10):
 
 # Inserindo dados na tabela Rotas
 for _ in range(10):
-    origem, destino = fake.random.choice([row for row in cur.execute("SELECT Origem, Destino FROM Cidade")])
+    Nome_Cidade_Origem, Nome_Cidade_Destino = fake.random.choice([row for row in cur.execute("SELECT Nome_Cidade_Origem, Nome_Cidade_Destino FROM Cidade")])
     distancia = randint(100, 1000)
     preco = randint(50, 200)
     
     cur.execute("INSERT INTO Rotas (Origem, Destino, Distancia, Preco) VALUES (%s, %s, %s, %s)",
-                (origem, destino, distancia, preco))
+                (Nome_Cidade_Origem, Nome_Cidade_Destino, distancia, preco))
 
 # Inserindo dados na tabela Veiculos
 for _ in range(5):
@@ -87,18 +85,18 @@ for _ in range(10):
         
 # Inserindo dados na tabela Possui
 for _ in range(10):
-    data_hora_chegada, data_hora_partida, origem, destino = fake.random.choice([row for row in cur.execute("SELECT Data_Hora_Chegada, Data_Hora_Partida, Origem, Destino FROM Horario, Rotas")])
+    data_hora_chegada, data_hora_partida, Nome_Cidade_Origem, Nome_Cidade_Destino = fake.random.choice([row for row in cur.execute("SELECT Data_Hora_Chegada, Data_Hora_Partida, Nome_Cidade_Origem, Nome_Cidade_Destino FROM Horario, Rotas")])
     
-    cur.execute("INSERT INTO Possui (Data_Hora_Chegada, Data_Hora_Partida, Origem, Destino) VALUES (%s, %s, %s, %s)",
-                (data_hora_chegada, data_hora_partida, origem, destino))
+    cur.execute("INSERT INTO Possui (Data_Hora_Chegada, Data_Hora_Partida, Nome_Cidade_Origem, Nome_Cidade_Destino) VALUES (%s, %s, %s, %s)",
+                (data_hora_chegada, data_hora_partida, Nome_Cidade_Origem, Nome_Cidade_Destino))
 
 # Inserindo dados na tabela Realizado_por
 for _ in range(10):
     placa = fake.random.choice([row[0] for row in cur.execute("SELECT Placa FROM Veiculos")])
-    origem, destino = fake.random.choice([row for row in cur.execute("SELECT Origem, Destino FROM Rotas")])
+    Nome_Cidade_Origem, Nome_Cidade_Destino = fake.random.choice([row for row in cur.execute("SELECT Nome_Cidade_Origem, Nome_Cidade_Destino FROM Rotas")])
     
     cur.execute("INSERT INTO Realizado_por (Placa, Origem, Destino) VALUES (%s, %s, %s)",
-                (placa, origem, destino))
+                (placa, Nome_Cidade_Origem, Nome_Cidade_Destino))
 
 conn.commit() #literalmente insere no bd
 cur.close() #fecha o cursor que se comunica com o bd
