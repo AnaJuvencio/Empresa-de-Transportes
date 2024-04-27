@@ -4,7 +4,7 @@ from random import randint
 from datetime import datetime
 
 #OBS: 
-# 1º Precisa verificar se está inserindo as datas corretamente, na tabela Horário coloquei um exemplo de como ficaria, coloquei oq é pra ser a estrutura correta
+# 1º Precisa verificar se está inserindo as datas corretamente, coloquei oq é pra ser a estrutura correta
 # 2º Verificar se está respeitando as duas triggers 
 # 3º Verificar se está violando a restrição de integridade referencial
 # 4º Criar mecanismo que tente gerar os dados novamente em caso de erro de inserção (por segurança)
