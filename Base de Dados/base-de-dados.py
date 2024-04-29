@@ -1,7 +1,9 @@
 import psycopg2 #para fazer a conexão com o bd
 from faker import Faker #gerar dados 
+import random
 from random import randint
 from datetime import datetime
+
 
 #OBS: 
 # 1º Precisa verificar se está inserindo as datas corretamente, coloquei oq é pra ser a estrutura correta
@@ -12,8 +14,8 @@ from datetime import datetime
 # Conexão com o banco de dados
 conn = psycopg2.connect(
     dbname="empresa_de_transportes",
-    user="seu_usuario",
-    password="sua_senha",
+    user="postgres",
+    password="0113",
     host="localhost",
     port="5432"
 )
@@ -21,8 +23,8 @@ conn = psycopg2.connect(
 # Cursor
 cur = conn.cursor()
 
-# Faker para gerar dados falsos
-fake = Faker()
+# Criar uma instância do Faker com suporte para dados brasileiros
+fake = Faker(['pt_BR'])
 
 # Função para inserir dados 
 def inserir_dados(tabela, dados):
@@ -34,7 +36,7 @@ def inserir_dados(tabela, dados):
         conn.rollback()
 
 # Inserção de dados na tabela Cliente
-for _ in range(10):
+for _ in range(1):
     cpf = fake.unique.random_number(digits=11)
     nome = fake.name()
     endereco = fake.address()
@@ -42,52 +44,78 @@ for _ in range(10):
     email = fake.email()
     inserir_dados("Cliente", (cpf, nome, endereco, telefone, email))
 
+
 # Inserção de dados na tabela Cidade
-for _ in range(10):
+for _ in range(2):
     nome_cidade = fake.city()
     inserir_dados("Cidade", (nome_cidade,))
 
+
 # Inserção de dados na tabela Horario
-for _ in range(10):
-    data_hora_chegada = fake.future_datetime(end_date='+30d').strftime('%Y-%m-%d %H:%M:%S')
-    data_hora_partida = fake.date_time_between(start_date=data_hora_chegada, end_date=data_hora_chegada).strftime('%Y-%m-%d %H:%M:%S')
+for _ in range(1):
+    data_hora_chegada = fake.future_datetime(end_date='+30d')
+    data_hora_partida = fake.date_time_between(start_date=data_hora_chegada, end_date=data_hora_chegada)
     inserir_dados("Horario", (data_hora_chegada, data_hora_partida))
 
+
+# Consulta para selecionar todas as cidades da tabela Cidade
+cur.execute("SELECT Nome_Cidade FROM Cidade")
+
+# Recuperar todas as cidades da consulta
+cidades = [row[0] for row in cur.fetchall()]
+
 # Inserção de dados na tabela Rotas
-for _ in range(10):
-    nome_cidade_origem = fake.random.choice([row[0] for row in cur.execute("SELECT Nome_Cidade FROM Cidade")])
-    nome_cidade_destino = fake.random.choice([row[0] for row in cur.execute("SELECT Nome_Cidade FROM Cidade")])
-    while nome_cidade_origem == nome_cidade_destino:  # Garante que as cidades de origem e destino sejam diferentes
-        nome_cidade_destino = fake.random.choice([row[0] for row in cur.execute("SELECT Nome_Cidade FROM Cidade")])
+for _ in range(1):
+    # Selecionar cidades aleatórias de origem e destino
+    nome_cidade_origem = random.choice(cidades)
+    nome_cidade_destino = random.choice(cidades)
+
+    # Garantir que as cidades de origem e destino sejam diferentes
+    while nome_cidade_origem == nome_cidade_destino:
+        nome_cidade_destino = random.choice(cidades)
+
+    # Gerar distância e preço aleatórios
     distancia = randint(100, 1000)
     preco = randint(50, 200)
+
+    # Inserir dados na tabela Rotas
     inserir_dados("Rotas", (nome_cidade_origem, nome_cidade_destino, distancia, preco))
+    
+# Inserção de dados na tabela Rotas
+#for _ in range(1):
+#    nome_cidade_origem = fake.random.choice([row[0] for row in cur.execute("SELECT nome_cidade FROM Cidade")])
+#    nome_cidade_destino = fake.random.choice([row[0] for row in cur.execute("SELECT nome_cidade FROM Cidade")])
+#    while nome_cidade_origem == nome_cidade_destino:  # Garante que as cidades de origem e destino sejam diferentes
+#        nome_cidade_destino = fake.random.choice([row[0] for row in cur.execute("SELECT nome_cidade FROM Cidade")])
+#    distancia = randint(100, 1000)
+#    preco = randint(50, 200)
+#    inserir_dados("Rotas", (nome_cidade_origem, nome_cidade_destino, distancia, preco))
 
 # Inserção de dados na tabela Veiculos
-for _ in range(5):
+for _ in range(1):
     placa = fake.unique.license_plate()
-    modelo = fake.car_model()  
+    modelo = fake.vehicle_make_and_model() #dando erro
     ano = fake.random.randint(2010, 2023)
     status_vei = fake.random.choice(["disponivel", "em manutencao"])
     capacidade = randint(1, 60)
     inserir_dados("Veiculos", (placa, modelo, ano, status_vei, capacidade))
 
 # Inserção de dados na tabela Compra
-for _ in range(10):
+for _ in range(1):
     cpf = fake.unique.random_number(digits=11)
-    data_hora_chegada = fake.future_datetime(end_date='+30d').strftime('%Y-%m-%d %H:%M:%S')
-    data_hora_partida = fake.date_time_between(start_date=data_hora_chegada, end_date=data_hora_chegada).strftime('%Y-%m-%d %H:%M:%S')
+    data_hora_chegada = fake.future_datetime(end_date='+30d')
+    data_hora_partida = fake.date_time_between(start_date=data_hora_chegada, end_date=data_hora_chegada)
     assento = randint(1, 59)
     status_ag = fake.random.choice(["confirmado", "cancelado", "realizado"])
     inserir_dados("Compra", (cpf, data_hora_chegada, data_hora_partida, assento, status_ag))
 
 # Inserção de dados na tabela Possui
-for _ in range(10):
+for _ in range(1):
     data_hora_chegada, data_hora_partida, nome_cidade_origem, nome_cidade_destino = fake.random.choice([row for row in cur.execute("SELECT Data_Hora_Chegada, Data_Hora_Partida, Nome_Cidade_Origem, Nome_Cidade_Destino FROM Horario, Rotas")])
     inserir_dados("Possui", (data_hora_chegada, data_hora_partida, nome_cidade_origem, nome_cidade_destino))
 
 # Inserção de dados na tabela Realizado_por
-for _ in range(10):
+for _ in range(1):
     placa = fake.random.choice([row[0] for row in cur.execute("SELECT Placa FROM Veiculos")])
     nome_cidade_origem, nome_cidade_destino = fake.random.choice([row for row in cur.execute("SELECT Nome_Cidade_Origem, Nome_Cidade_Destino FROM Rotas")])
     inserir_dados("Realizado_por", (placa, nome_cidade_origem, nome_cidade_destino))
