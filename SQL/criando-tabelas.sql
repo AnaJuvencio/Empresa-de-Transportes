@@ -49,58 +49,27 @@ CREATE TABLE Compra (
     CPF VARCHAR(11),
     Data_Hora_Chegada TIMESTAMP WITHOUT TIME ZONE,
     Data_Hora_Partida TIMESTAMP WITHOUT TIME ZONE,
+    Nome_Cidade_Origem VARCHAR(100),
+    Nome_Cidade_Destino VARCHAR(100),
     Assento INT NOT NULL,
     Status_ag VARCHAR(20) CHECK (Status_ag IN ('confirmado', 'cancelado', 'realizado')) NOT NULL,
+    FOREIGN KEY (Data_Hora_Chegada, Data_Hora_Partida, Nome_Cidade_Origem, Nome_Cidade_Destino) REFERENCES Realizacao_rota(Data_Hora_Chegada, Data_Hora_Partida, Nome_Cidade_Origem, Nome_Cidade_Destino),
     FOREIGN KEY (CPF) REFERENCES Cliente(CPF),
-    FOREIGN KEY (Data_Hora_Chegada, Data_Hora_Partida) REFERENCES Horario(Data_Hora_Chegada, Data_Hora_Partida),
     PRIMARY KEY (CPF, Data_Hora_Chegada, Data_Hora_Partida)
 );
 
--- Criação da tabela Possui
-CREATE TABLE Possui (
+CREATE TABLE Realizacao_rota(
     Data_Hora_Chegada TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     Data_Hora_Partida TIMESTAMP WITHOUT TIME ZONE NOT NULL,
 	Nome_Cidade_Origem VARCHAR(100),
 	Nome_Cidade_Destino VARCHAR(100),
+    Placa VARCHAR(10) NOT NULL,
     FOREIGN KEY (Data_Hora_Chegada, Data_Hora_Partida) REFERENCES Horario(Data_Hora_Chegada, Data_Hora_Partida),
-	FOREIGN KEY (Nome_Cidade_Origem, Nome_Cidade_Destino) REFERENCES Rotas(Nome_Cidade_Origem, Nome_Cidade_Destino),
+    FOREIGN KEY (Nome_Cidade_Origem, Nome_Cidade_Destino) REFERENCES Rotas(Nome_Cidade_Origem, Nome_Cidade_Destino),
+    FOREIGN KEY (Placa) REFERENCES Veiculos(Placa),
     PRIMARY KEY (Data_Hora_Chegada, Data_Hora_Partida, Nome_Cidade_Origem, Nome_Cidade_Destino)
 );
---Criação da tabela Realizado_por
-CREATE TABLE Realizado_por (
-    Placa VARCHAR(10) NOT NULL,
-    FOREIGN KEY (Placa) REFERENCES Veiculos(Placa),
-    Nome_Cidade_Origem VARCHAR(100),
-	Nome_Cidade_Destino VARCHAR(100),
-	PRIMARY KEY (Placa, Nome_Cidade_Origem, Nome_Cidade_Destino)
-);
 
-CREATE OR REPLACE FUNCTION verificar_capacidade_assento() RETURNS TRIGGER AS $$
-DECLARE
-    capacidade_veiculo INT;
-BEGIN
-	
-    -- Busca a capacidade do veículo usando as junções necessárias
-    SELECT Veiculos.capacidade INTO capacidade_veiculo
-    FROM Horario h NATURAL
-    JOIN Possui  NATURAL JOIN Realizado_por  NATURAL JOIN Veiculos 
-    WHERE h.Data_Hora_Chegada = NEW.Data_Hora_Chegada AND h.Data_Hora_Partida = NEW.Data_Hora_Partida;
-
-    -- Verifica se o assento escolhido é menor ou igual à capacidade do veículo
-  	IF capacidade_veiculo IS NULL THEN
-    RAISE EXCEPTION 'Capacidade do veículo não encontrada ou veículo não existe.';
-    ELSIF NEW.Assento > capacidade_veiculo THEN
-        RAISE EXCEPTION 'O número do assento % é maior que a capacidade do veículo, que é %.', NEW.Assento, capacidade_veiculo;
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-
-CREATE TRIGGER verificar_capacidade_antes_insercao
-BEFORE INSERT OR UPDATE ON Compra
-FOR EACH ROW EXECUTE FUNCTION verificar_capacidade_assento();
 
 --trigger para verificar se assento está disponível 
 CREATE OR REPLACE FUNCTION verificar_assento_disponivel()
@@ -127,6 +96,34 @@ FOR EACH ROW EXECUTE FUNCTION verificar_assento_disponivel();
 
 
 -------------------------------------------------------------------------------------------------
+/*CREATE OR REPLACE FUNCTION verificar_capacidade_assento() RETURNS TRIGGER AS $$
+DECLARE
+    capacidade_veiculo INT;
+BEGIN
+	
+    -- Busca a capacidade do veículo usando as junções necessárias
+    SELECT Veiculos.capacidade INTO capacidade_veiculo
+    FROM Horario h NATURAL
+    JOIN Possui  NATURAL JOIN Realizado_por  NATURAL JOIN Veiculos 
+    WHERE h.Data_Hora_Chegada = NEW.Data_Hora_Chegada AND h.Data_Hora_Partida = NEW.Data_Hora_Partida;
+
+    -- Verifica se o assento escolhido é menor ou igual à capacidade do veículo
+  	IF capacidade_veiculo IS NULL THEN
+    RAISE EXCEPTION 'Capacidade do veículo não encontrada ou veículo não existe.';
+    ELSIF NEW.Assento > capacidade_veiculo THEN
+        RAISE EXCEPTION 'O número do assento % é maior que a capacidade do veículo, que é %.', NEW.Assento, capacidade_veiculo;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE TRIGGER verificar_capacidade_antes_insercao
+BEFORE INSERT OR UPDATE ON Compra
+FOR EACH ROW EXECUTE FUNCTION verificar_capacidade_assento();*/
+
+
 /*testes
 -- Inserindo dados na tabela Cliente
 INSERT INTO Cliente (CPF, Nome, Endereco, Telefone, Email) VALUES
@@ -197,4 +194,24 @@ SELECT Veiculos.capacidade
 
 
 DROP TABLE realizado_por 
+
+-- Criação da tabela Possui
+/*CREATE TABLE Possui (
+    Data_Hora_Chegada TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    Data_Hora_Partida TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	Nome_Cidade_Origem VARCHAR(100),
+	Nome_Cidade_Destino VARCHAR(100),
+    FOREIGN KEY (Data_Hora_Chegada, Data_Hora_Partida) REFERENCES Horario(Data_Hora_Chegada, Data_Hora_Partida),
+	FOREIGN KEY (Nome_Cidade_Origem, Nome_Cidade_Destino) REFERENCES Rotas(Nome_Cidade_Origem, Nome_Cidade_Destino),
+    PRIMARY KEY (Data_Hora_Chegada, Data_Hora_Partida, Nome_Cidade_Origem, Nome_Cidade_Destino)
+);*/
+--Criação da tabela Realizado_por
+/*CREATE TABLE Realizado_por (
+    Placa VARCHAR(10) NOT NULL,
+    FOREIGN KEY (Placa) REFERENCES Veiculos(Placa),
+    Nome_Cidade_Origem VARCHAR(100),
+	Nome_Cidade_Destino VARCHAR(100),
+	PRIMARY KEY (Placa, Nome_Cidade_Origem, Nome_Cidade_Destino)
+);*/
+
 */

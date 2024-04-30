@@ -128,47 +128,42 @@ while len(veiculos_gerados) < 5:  # Gerar 10000 registros de veículos únicos
         inserir_dados("Veiculos", (placa, veiculo, ano, status_vei, capacidade))
         veiculos_gerados.add(veiculo)  # Adicionar a combinação à lista de veículos gerados
 
-# Inserção de dados na tabela Possui
+# tabela Realizacao_rota
 for _ in range(2):
-    # Executar a consulta no banco de dados
-    cur.execute("SELECT Data_Hora_Chegada, Data_Hora_Partida, Nome_Cidade_Origem, Nome_Cidade_Destino FROM Horario, Rotas")
-    # Buscar todos os resultados da consulta
-    rows = cur.fetchall()
-    # Usar o fake.random.choice() para selecionar aleatoriamente uma linha dos resultados
-    data_hora_chegada, data_hora_partida, nome_cidade_origem, nome_cidade_destino = fake.random.choice(rows)
-    # Inserir os dados na tabela Possui
-    inserir_dados("Possui", (data_hora_chegada, data_hora_partida, nome_cidade_origem, nome_cidade_destino))
+    # Consulta para obter um horário existente na tabela Horario
+    cur.execute("SELECT data_hora_chegada, data_hora_partida FROM Horario ORDER BY RANDOM() LIMIT 1")
+    data_hora_chegada, data_hora_partida = cur.fetchone()
+
+    # Consulta para obter uma rota existente na tabela Rotas
+    cur.execute("SELECT nome_cidade_origem, nome_cidade_destino FROM Rotas ORDER BY RANDOM() LIMIT 1")
+    nome_cidade_origem, nome_cidade_destino = cur.fetchone()
+
+    # Consulta para obter uma placa de veículo existente na tabela Veiculos
+    cur.execute("SELECT placa FROM Veiculos ORDER BY RANDOM() LIMIT 1")
+    placa = cur.fetchone()[0]
+
+    # Inserir os dados na tabela Realizacao_rota
+    inserir_dados("Realizacao_rota", (data_hora_chegada, data_hora_partida, nome_cidade_origem, nome_cidade_destino, placa))
 
 
-# Inserção de dados na tabela Realizado_por
-for _ in range(2):
-    # Executar a consulta para obter as placas dos veículos
-    cur.execute("SELECT Placa FROM Veiculos")
-    placas = [row[0] for row in cur.fetchall()]
-    # Selecionar aleatoriamente uma placa
-    placa = fake.random.choice(placas)
-    # Executar a consulta para obter os nomes das cidades de origem e destino das rotas
-    cur.execute("SELECT Nome_Cidade_Origem, Nome_Cidade_Destino FROM Rotas")
-    rows = cur.fetchall()
-    # Selecionar aleatoriamente um par de cidades de origem e destino
-    nome_cidade_origem, nome_cidade_destino = fake.random.choice(rows)
-    # Inserir os dados na tabela Realizado_por
-    inserir_dados("Realizado_por", (placa, nome_cidade_origem, nome_cidade_destino))
-
+# Tabela Compra
 tentativas = 0
 insercoes_bem_sucedidas = 0
-for _ in range(2):
+for _ in range(2):  # Altere o valor dentro do range para o número desejado de inserções
     # Para cada linha a ser inserida, precisamos garantir que os dados sejam únicos
     while True:
         # Consulta para obter um CPF existente na tabela Cliente
         cur.execute("SELECT cpf FROM Cliente ORDER BY RANDOM() LIMIT 1")
         cpf_cliente = cur.fetchone()[0]
 
-        # Consulta para obter um horário existente na tabela Horario
-        cur.execute("SELECT data_hora_chegada, data_hora_partida FROM Horario ORDER BY RANDOM() LIMIT 1")
+        # Consulta para obter um horário existente na tabela Realizacao_rota
+        cur.execute("SELECT data_hora_chegada, data_hora_partida FROM Realizacao_rota ORDER BY RANDOM() LIMIT 1")
         data_hora_chegada, data_hora_partida = cur.fetchone()
-        
-        #print("Dados selecionados:", cpf_cliente, data_hora_chegada, data_hora_partida)  # Mensagem de depuração
+
+        # Consulta para obter a rota existente na tabela Realizacao_rota
+        cur.execute("SELECT Nome_Cidade_Origem, Nome_Cidade_Destino FROM Realizacao_rota ORDER BY RANDOM() LIMIT 1")
+        Nome_Cidade_Origem, Nome_Cidade_Destino = cur.fetchone()
+
         # Gerar um número de assento aleatório entre 1 e 50
         assento = randint(1, 50)
 
@@ -180,19 +175,10 @@ for _ in range(2):
         if cur.fetchone()[0] == 0:  # Se não houver registros com essa combinação de dados
             tentativas += 1
             # Inserir os dados na tabela Compra
-            inserir_dados("Compra", (cpf_cliente, data_hora_chegada, data_hora_partida, assento, status_ag))
+            inserir_dados("Compra", (cpf_cliente, data_hora_chegada, data_hora_partida, Nome_Cidade_Origem, Nome_Cidade_Destino, assento, status_ag))
             insercoes_bem_sucedidas += 1
             break  # Sai do loop while
-        
-    
-# Inserção de dados na tabela Compra
-#for _ in range(1):
-#    cpf = fake.unique.random_number(digits=11)
-#    data_hora_chegada = fake.future_datetime(end_date='+30d')
-#    data_hora_partida = fake.date_time_between(start_date=data_hora_chegada, end_date=data_hora_chegada)
-#    assento = randint(1, 50)
-#    status_ag = fake.random.choice(["confirmado", "cancelado", "realizado"])
-#    inserir_dados("Compra", (cpf, data_hora_chegada, data_hora_partida, assento, status_ag))
+
 
 print(f"Tentativas de inserção em compra: {tentativas}")
 print(f"Inserções bem-sucedidas da tabela compra: {insercoes_bem_sucedidas}")
@@ -220,3 +206,39 @@ conn.close()
 #    status_vei = fake.random.choice(["disponivel", "em manutencao"])
 #    capacidade = randint(1, 60)
 #    inserir_dados("Veiculos", (placa, modelo, ano, status_vei, capacidade))
+
+# Inserção de dados na tabela Possui
+#for _ in range(2):
+#    # Executar a consulta no banco de dados
+#    cur.execute("SELECT Data_Hora_Chegada, Data_Hora_Partida, Nome_Cidade_Origem, Nome_Cidade_Destino FROM Horario, Rotas")
+#    # Buscar todos os resultados da consulta
+#    rows = cur.fetchall()
+#    # Usar o fake.random.choice() para selecionar aleatoriamente uma linha dos resultados
+#    data_hora_chegada, data_hora_partida, nome_cidade_origem, nome_cidade_destino = fake.random.choice(rows)
+#    # Inserir os dados na tabela Possui
+#    inserir_dados("Possui", (data_hora_chegada, data_hora_partida, nome_cidade_origem, nome_cidade_destino))
+
+
+# Inserção de dados na tabela Realizado_por
+#for _ in range(2):
+#    # Executar a consulta para obter as placas dos veículos
+#    cur.execute("SELECT Placa FROM Veiculos")
+#    placas = [row[0] for row in cur.fetchall()]
+#    # Selecionar aleatoriamente uma placa
+#    placa = fake.random.choice(placas)
+#    # Executar a consulta para obter os nomes das cidades de origem e destino das rotas
+#    cur.execute("SELECT Nome_Cidade_Origem, Nome_Cidade_Destino FROM Rotas")
+#    rows = cur.fetchall()
+#    # Selecionar aleatoriamente um par de cidades de origem e destino
+#    nome_cidade_origem, nome_cidade_destino = fake.random.choice(rows)
+#    # Inserir os dados na tabela Realizado_por
+#   inserir_dados("Realizado_por", (placa, nome_cidade_origem, nome_cidade_destino))
+
+# Inserção de dados na tabela Compra
+#for _ in range(1):
+#    cpf = fake.unique.random_number(digits=11)
+#    data_hora_chegada = fake.future_datetime(end_date='+30d')
+#    data_hora_partida = fake.date_time_between(start_date=data_hora_chegada, end_date=data_hora_chegada)
+#    assento = randint(1, 50)
+#    status_ag = fake.random.choice(["confirmado", "cancelado", "realizado"])
+#    inserir_dados("Compra", (cpf, data_hora_chegada, data_hora_partida, assento, status_ag))
