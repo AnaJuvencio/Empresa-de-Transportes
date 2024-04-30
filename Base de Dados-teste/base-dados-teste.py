@@ -1,7 +1,7 @@
 import psycopg2 #para fazer a conexão com o bd
 from faker import Faker #gerar dados 
 import random
-from random import randint
+from random import randint, choice
 from datetime import datetime
 import csv
 
@@ -37,7 +37,7 @@ def inserir_dados(tabela, dados):
         conn.rollback()
 
 # Inserção de dados na tabela Cliente
-for _ in range(1):
+for _ in range(2):
     cpf = fake.unique.random_number(digits=11)
     nome = fake.name()
     endereco = fake.address()
@@ -63,7 +63,7 @@ for _ in range(2): #4430
 
 
 # Inserção de dados na tabela Horario
-for _ in range(1):
+for _ in range(2):
     data_hora_chegada = fake.future_datetime(end_date='+30d')
     data_hora_partida = fake.date_time_between(start_date=data_hora_chegada, end_date=data_hora_chegada)
     inserir_dados("Horario", (data_hora_chegada, data_hora_partida))
@@ -73,7 +73,7 @@ for _ in range(1):
 cur.execute("SELECT Nome_Cidade FROM Cidade")
 # Recuperar todas as cidades da consulta
 cidades = [row[0] for row in cur.fetchall()]
-for _ in range(1):
+for _ in range(2):
     # Selecionar cidades aleatórias de origem e destino
     nome_cidade_origem = random.choice(cidades)
     nome_cidade_destino = random.choice(cidades)
@@ -129,7 +129,7 @@ while len(veiculos_gerados) < 5:  # Gerar 10000 registros de veículos únicos
         veiculos_gerados.add(veiculo)  # Adicionar a combinação à lista de veículos gerados
 
 # Inserção de dados na tabela Possui
-for _ in range(1):
+for _ in range(2):
     # Executar a consulta no banco de dados
     cur.execute("SELECT Data_Hora_Chegada, Data_Hora_Partida, Nome_Cidade_Origem, Nome_Cidade_Destino FROM Horario, Rotas")
     # Buscar todos os resultados da consulta
@@ -141,8 +141,7 @@ for _ in range(1):
 
 
 # Inserção de dados na tabela Realizado_por
-    
-for _ in range(1):
+for _ in range(2):
     # Executar a consulta para obter as placas dos veículos
     cur.execute("SELECT Placa FROM Veiculos")
     placas = [row[0] for row in cur.fetchall()]
@@ -156,15 +155,48 @@ for _ in range(1):
     # Inserir os dados na tabela Realizado_por
     inserir_dados("Realizado_por", (placa, nome_cidade_origem, nome_cidade_destino))
 
-# Inserção de dados na tabela Compra
-for _ in range(1):
-    cpf = fake.unique.random_number(digits=11)
-    data_hora_chegada = fake.future_datetime(end_date='+30d')
-    data_hora_partida = fake.date_time_between(start_date=data_hora_chegada, end_date=data_hora_chegada)
-    assento = randint(1, 50)
-    status_ag = fake.random.choice(["confirmado", "cancelado", "realizado"])
-    inserir_dados("Compra", (cpf, data_hora_chegada, data_hora_partida, assento, status_ag))
+tentativas = 0
+insercoes_bem_sucedidas = 0
+for _ in range(2):
+    # Para cada linha a ser inserida, precisamos garantir que os dados sejam únicos
+    while True:
+        # Consulta para obter um CPF existente na tabela Cliente
+        cur.execute("SELECT cpf FROM Cliente ORDER BY RANDOM() LIMIT 1")
+        cpf_cliente = cur.fetchone()[0]
 
+        # Consulta para obter um horário existente na tabela Horario
+        cur.execute("SELECT data_hora_chegada, data_hora_partida FROM Horario ORDER BY RANDOM() LIMIT 1")
+        data_hora_chegada, data_hora_partida = cur.fetchone()
+        
+        #print("Dados selecionados:", cpf_cliente, data_hora_chegada, data_hora_partida)  # Mensagem de depuração
+        # Gerar um número de assento aleatório entre 1 e 50
+        assento = randint(1, 50)
+
+        # Escolher um status de compra aleatório entre "confirmado", "cancelado" e "realizado"
+        status_ag = choice(["confirmado", "cancelado", "realizado"])
+
+        # Verificar se essa combinação de dados já existe na tabela Compra
+        cur.execute("SELECT COUNT(*) FROM Compra WHERE cpf = %s AND data_hora_chegada = %s AND data_hora_partida = %s", (cpf_cliente, data_hora_chegada, data_hora_partida))
+        if cur.fetchone()[0] == 0:  # Se não houver registros com essa combinação de dados
+            tentativas += 1
+            # Inserir os dados na tabela Compra
+            inserir_dados("Compra", (cpf_cliente, data_hora_chegada, data_hora_partida, assento, status_ag))
+            insercoes_bem_sucedidas += 1
+            break  # Sai do loop while
+        
+    
+# Inserção de dados na tabela Compra
+#for _ in range(1):
+#    cpf = fake.unique.random_number(digits=11)
+#    data_hora_chegada = fake.future_datetime(end_date='+30d')
+#    data_hora_partida = fake.date_time_between(start_date=data_hora_chegada, end_date=data_hora_chegada)
+#    assento = randint(1, 50)
+#    status_ag = fake.random.choice(["confirmado", "cancelado", "realizado"])
+#    inserir_dados("Compra", (cpf, data_hora_chegada, data_hora_partida, assento, status_ag))
+
+print(f"Tentativas de inserção em compra: {tentativas}")
+print(f"Inserções bem-sucedidas da tabela compra: {insercoes_bem_sucedidas}")
+print('Inserção completa!')
 # Fechar conexão e cursor
 cur.close()
 conn.close()
