@@ -23,18 +23,6 @@ CREATE TABLE Horario (
     PRIMARY KEY (Data_Hora_Chegada, Data_Hora_Partida)
 );
 
--- Criação da tabela Rotas
-CREATE TABLE Rotas (
-    Nome_Cidade_Origem VARCHAR(100),
-	Nome_Cidade_Destino VARCHAR(100),
-    Distancia DECIMAL(10,2) NOT NULL,
-    Preco DECIMAL(10,2) NOT NULL ,
-    FOREIGN KEY (Nome_Cidade_Origem) REFERENCES Cidade(Nome_Cidade),
-    FOREIGN KEY (Nome_Cidade_Destino) REFERENCES Cidade(Nome_Cidade),
-    PRIMARY KEY (Nome_Cidade_Origem, Nome_Cidade_Destino),
-	CHECK (Nome_Cidade_Origem <> Nome_Cidade_Destino) -- Restrição de verificação
-);
-
 -- Criação da tabela Veiculos
 CREATE TABLE Veiculos (
     Placa VARCHAR(10) PRIMARY KEY,
@@ -42,6 +30,20 @@ CREATE TABLE Veiculos (
     Ano INT NOT NULL,
     Status_vei VARCHAR(20) CHECK (Status_vei IN ('disponivel', 'em manutencao')) NOT NULL,
     Capacidade INT NOT NULL
+);
+
+-- Criação da tabela Rotas
+CREATE TABLE Rotas (
+    Nome_Cidade_Origem VARCHAR(100),
+    Nome_Cidade_Destino VARCHAR(100),
+    Distancia DECIMAL(10,2) NOT NULL,
+    Preco DECIMAL(10,2) NOT NULL ,
+    Placa VARCHAR(10),
+    FOREIGN KEY (Placa) REFERENCES Veiculos (Placa),
+    FOREIGN KEY (Nome_Cidade_Origem) REFERENCES Cidade(Nome_Cidade),
+    FOREIGN KEY (Nome_Cidade_Destino) REFERENCES Cidade(Nome_Cidade),
+    PRIMARY KEY (Nome_Cidade_Origem, Nome_Cidade_Destino),
+	CHECK (Nome_Cidade_Origem <> Nome_Cidade_Destino) -- Restrição de verificação
 );
 
 -- Criação da tabela Compra
@@ -53,165 +55,20 @@ CREATE TABLE Compra (
     Nome_Cidade_Destino VARCHAR(100),
     Assento INT NOT NULL,
     Status_ag VARCHAR(20) CHECK (Status_ag IN ('confirmado', 'cancelado', 'realizado')) NOT NULL,
-    FOREIGN KEY (Data_Hora_Chegada, Data_Hora_Partida, Nome_Cidade_Origem, Nome_Cidade_Destino) REFERENCES Realizacao_rota(Data_Hora_Chegada, Data_Hora_Partida, Nome_Cidade_Origem, Nome_Cidade_Destino),
     FOREIGN KEY (CPF) REFERENCES Cliente(CPF),
+    FOREIGN KEY (Data_Hora_Chegada, Data_Hora_Partida) REFERENCES Horario(Data_Hora_Chegada, Data_Hora_Partida),
+    FOREIGN KEY (Nome_Cidade_Origem, Nome_Cidade_Destino) REFERENCES Rotas(Nome_Cidade_Origem, Nome_Cidade_Destino),
     PRIMARY KEY (CPF, Data_Hora_Chegada, Data_Hora_Partida)
 );
 
-CREATE TABLE Realizacao_rota(
-    Data_Hora_Chegada TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    Data_Hora_Partida TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-	Nome_Cidade_Origem VARCHAR(100),
-	Nome_Cidade_Destino VARCHAR(100),
-    Placa VARCHAR(10) NOT NULL,
+
+-- Criação da tabela Disponibilidade
+CREATE TABLE Disponibilidade (
+    Data_Hora_Chegada TIMESTAMP WITHOUT TIME ZONE,
+    Data_Hora_Partida TIMESTAMP WITHOUT TIME ZONE,
+    Nome_Cidade_Origem VARCHAR(100),
+    Nome_Cidade_Destino VARCHAR(100),
     FOREIGN KEY (Data_Hora_Chegada, Data_Hora_Partida) REFERENCES Horario(Data_Hora_Chegada, Data_Hora_Partida),
     FOREIGN KEY (Nome_Cidade_Origem, Nome_Cidade_Destino) REFERENCES Rotas(Nome_Cidade_Origem, Nome_Cidade_Destino),
-    FOREIGN KEY (Placa) REFERENCES Veiculos(Placa),
-    PRIMARY KEY (Data_Hora_Chegada, Data_Hora_Partida, Nome_Cidade_Origem, Nome_Cidade_Destino)
+    PRIMARY KEY (Nome_Cidade_Origem, Nome_Cidade_Destino, Data_Hora_Chegada, Data_Hora_Partida)
 );
-
-
---trigger para verificar se assento está disponível 
-CREATE OR REPLACE FUNCTION verificar_assento_disponivel()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Verifica se o assento já está ocupado para a rota, horário e data 
-    IF EXISTS (
-        SELECT 1
-        FROM Compra
-        WHERE Data_Hora_Chegada = NEW.Data_Hora_Chegada
-        AND Data_Hora_Partida = NEW.Data_Hora_Partida
-        AND Assento = NEW.Assento
-    ) THEN
-        RAISE EXCEPTION 'O assento escolhido já está ocupado.';
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER verificar_assento_disponivel
-BEFORE INSERT OR UPDATE ON Compra
-FOR EACH ROW EXECUTE FUNCTION verificar_assento_disponivel();
-
-
--------------------------------------------------------------------------------------------------
-/*CREATE OR REPLACE FUNCTION verificar_capacidade_assento() RETURNS TRIGGER AS $$
-DECLARE
-    capacidade_veiculo INT;
-BEGIN
-	
-    -- Busca a capacidade do veículo usando as junções necessárias
-    SELECT Veiculos.capacidade INTO capacidade_veiculo
-    FROM Horario h NATURAL
-    JOIN Possui  NATURAL JOIN Realizado_por  NATURAL JOIN Veiculos 
-    WHERE h.Data_Hora_Chegada = NEW.Data_Hora_Chegada AND h.Data_Hora_Partida = NEW.Data_Hora_Partida;
-
-    -- Verifica se o assento escolhido é menor ou igual à capacidade do veículo
-  	IF capacidade_veiculo IS NULL THEN
-    RAISE EXCEPTION 'Capacidade do veículo não encontrada ou veículo não existe.';
-    ELSIF NEW.Assento > capacidade_veiculo THEN
-        RAISE EXCEPTION 'O número do assento % é maior que a capacidade do veículo, que é %.', NEW.Assento, capacidade_veiculo;
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-
-CREATE TRIGGER verificar_capacidade_antes_insercao
-BEFORE INSERT OR UPDATE ON Compra
-FOR EACH ROW EXECUTE FUNCTION verificar_capacidade_assento();*/
-
-
-/*testes
--- Inserindo dados na tabela Cliente
-INSERT INTO Cliente (CPF, Nome, Endereco, Telefone, Email) VALUES
-('12345678901', 'João Silva', 'Rua das Flores, 123', '11987654321', 'joao.silva@email.com'),
-('23456789012', 'Maria Oliveira', 'Avenida Central, 456', '21976543210', 'maria.oliveira@email.com');
-
--- Inserindo dados na tabela Cidade
-INSERT INTO Cidade (Nome_Cidade) VALUES
-('São Paulo'),
-('Rio de Janeiro'),
-('Minas Gerais'),
-('Rio Grande do Sul');
-
--- Inserindo dados na tabela Horario
-INSERT INTO Horario (Data_Hora_Chegada, Data_Hora_Partida) VALUES
-('2024-04-20 12:00:00', '2024-04-20 07:00:00'),
-('2024-04-21 12:00:00', '2024-04-21 07:00:00');
-
--- Inserindo dados na tabela Rotas
-INSERT INTO Rotas (Nome_Cidade_Origem, Nome_Cidade_Destino, Distancia, Preco) VALUES
-('São Paulo', 'Rio de Janeiro', 430.00, 120.00),
-('Rio de Janeiro', 'São Paulo', 430.00, 120.00);
-
--- Inserindo dados na tabela Veiculos
-INSERT INTO Veiculos (Placa, Modelo, Ano, Status_vei, Capacidade) VALUES
-('XYZ1234', 'Volvo Bus', 2020, 'disponivel', 40),
-('ABC5678', 'Mercedes Sprinter', 2021, 'em manutencao', 20);
-
--- Inserindo dados na tabela Compra (aqui vamos inserir um teste que deveria ser bloqueado pela trigger se o assento for maior do que a capacidade)
--- Certifique-se de que a trigger está ativada para fazer este teste
-INSERT INTO Compra (CPF, Data_Hora_Chegada, Data_Hora_Partida, Assento, Status_ag) VALUES
-('12345678901', '2024-04-20 12:00:00', '2024-04-20 07:00:00', 40, 'confirmado');
-INSERT INTO Compra (CPF, Data_Hora_Chegada, Data_Hora_Partida, Assento, Status_ag) VALUES
-('23456789012', '2024-04-21 12:00:00', '2024-04-21 07:00:00', 50, 'confirmado');
-INSERT INTO Compra (CPF, Data_Hora_Chegada, Data_Hora_Partida, Assento, Status_ag) VALUES
-('23456789012', '2024-04-20 12:00:00', '2024-04-20 07:00:00', 40, 'confirmado');
-
--- Inserindo dados na tabela Possui
-INSERT INTO Possui (Data_Hora_Chegada, Data_Hora_Partida, Nome_Cidade_Origem, Nome_Cidade_Destino) VALUES
-('2024-04-20 12:00:00', '2024-04-20 07:00:00', 'São Paulo', 'Rio de Janeiro');
-INSERT INTO Possui (Data_Hora_Chegada, Data_Hora_Partida, Nome_Cidade_Origem, Nome_Cidade_Destino) VALUES
-('2024-04-21 12:00:00', '2024-04-21 07:00:00', 'Rio de Janeiro', 'São Paulo');
-
--- Inserindo dados na tabela Realizado_por
-INSERT INTO Realizado_por (Placa, Nome_Cidade_Origem, Nome_Cidade_Destino) VALUES
-('XYZ1234', 'São Paulo', 'Rio de Janeiro');
-INSERT INTO Realizado_por (Placa, Nome_Cidade_Origem, Nome_Cidade_Destino) VALUES
-('ABC5678', 'Rio de Janeiro', 'São Paulo');
-
-/*teste
-DELETE FROM compra 
-SELECT * FROM compra
-SELECT * FROM veiculos
-
-SELECT *
-    FROM Compra  NATURAL JOIN Horario  NATURAL
-    JOIN Possui  NATURAL JOIN Realizado_por  NATURAL JOIN Veiculos 
-	
-SELECT *
-    FROM Compra  NATURAL JOIN Horario
-	SELECT Veiculos.capacidade
-    FROM Horario NATURAL
-    JOIN Possui  NATURAL JOIN Realizado_por  NATURAL JOIN Veiculos NATURAL JOIN compra
-	
-SELECT Veiculos.capacidade
-    FROM Horario NATURAL
-    JOIN Possui  NATURAL JOIN Realizado_por  NATURAL JOIN Veiculos 
-
-
-DROP TABLE realizado_por 
-
--- Criação da tabela Possui
-/*CREATE TABLE Possui (
-    Data_Hora_Chegada TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    Data_Hora_Partida TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-	Nome_Cidade_Origem VARCHAR(100),
-	Nome_Cidade_Destino VARCHAR(100),
-    FOREIGN KEY (Data_Hora_Chegada, Data_Hora_Partida) REFERENCES Horario(Data_Hora_Chegada, Data_Hora_Partida),
-	FOREIGN KEY (Nome_Cidade_Origem, Nome_Cidade_Destino) REFERENCES Rotas(Nome_Cidade_Origem, Nome_Cidade_Destino),
-    PRIMARY KEY (Data_Hora_Chegada, Data_Hora_Partida, Nome_Cidade_Origem, Nome_Cidade_Destino)
-);*/
---Criação da tabela Realizado_por
-/*CREATE TABLE Realizado_por (
-    Placa VARCHAR(10) NOT NULL,
-    FOREIGN KEY (Placa) REFERENCES Veiculos(Placa),
-    Nome_Cidade_Origem VARCHAR(100),
-	Nome_Cidade_Destino VARCHAR(100),
-	PRIMARY KEY (Placa, Nome_Cidade_Origem, Nome_Cidade_Destino)
-);*/
-
-*/
