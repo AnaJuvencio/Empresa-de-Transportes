@@ -110,7 +110,7 @@ while len(veiculos_gerados) < 5:  # Gerar 10000 registros de veículos únicos
     modelo = random.choice(modelos_carro)  # Escolher um modelo de carro aleatório
     ano = random.randint(1900, 2024)  # Gerar um ano de fabricação aleatório entre 2010 e 2023
     status_vei = random.choice(["disponivel", "em manutencao"])  # Escolher um status aleatório
-    capacidade = 60  # Gerar uma capacidade aleatória entre 1 e 60
+    capacidade = 65  # Gerar uma capacidade aleatória entre 1 e 60
     
     veiculo = f"{marca} {modelo}"  # Concatenar marca e modelo do veículo
     
@@ -189,14 +189,14 @@ for _ in range(2):  # Altere o valor dentro do range para o número desejado de 
         cur.execute("SELECT data_hora_chegada, data_hora_partida, nome_cidade_origem, nome_cidade_destino FROM Disponibilidade ORDER BY RANDOM() LIMIT 1")
         data_hora_chegada, data_hora_partida, nome_cidade_origem, nome_cidade_destino = cur.fetchone()
 
-        # Gerar um número de assento aleatório entre 1 e 50
-        assento = randint(1, 50)
+        # Gerar um número de assento aleatório entre 1 e 650
+        assento = randint(1, 65)
 
         # Escolher um status de compra aleatório entre "confirmado", "cancelado" e "realizado"
         status_ag = choice(["confirmado", "cancelado", "realizado"])
 
         # Verificar se essa combinação de dados já existe na tabela Compra
-        cur.execute("SELECT COUNT(*) FROM Compra WHERE cpf = %s AND data_hora_chegada = %s AND data_hora_partida = %s", (cpf_cliente, data_hora_chegada, data_hora_partida))
+        cur.execute("SELECT COUNT(*) FROM Compra WHERE cpf = %s AND data_hora_chegada = %s AND data_hora_partida = %s AND assento = %s", (cpf_cliente, data_hora_chegada, data_hora_partida, assento))
         if cur.fetchone()[0] == 0:  # Se não houver registros com essa combinação de dados
             tentativas_compra += 1
             # Inserir os dados na tabela Compra

@@ -4,6 +4,7 @@ import random
 from random import randint, choice
 from datetime import datetime
 import csv
+from datetime import timedelta
 
 #OBS: 
 # 1º Precisa verificar se está inserindo as datas corretamente, coloquei oq é pra ser a estrutura correta
@@ -57,16 +58,29 @@ for cidade in municipios:  # Iterar sobre a lista de municípios
     inserir_dados("Cidade", (cidade,))
      
 # Inserção de dados na tabela Cidade
-for _ in range(6000): #4430
+for _ in range(5000): #4430
     nome_cidade = fake.city()
     inserir_dados("Cidade", (nome_cidade,))
 
 
 # Inserção de dados na tabela Horario
-for _ in range(10000):
-    data_hora_chegada = fake.future_datetime(end_date='+30d')
-    data_hora_partida = fake.date_time_between(start_date=data_hora_chegada, end_date=data_hora_chegada)
-    inserir_dados("Horario", (data_hora_chegada, data_hora_partida))
+# Gerar dados realistas para a tabela Horario
+horarios = set()
+
+while len(horarios) < 10000:
+    # Gerar uma data de partida aleatória dentro dos próximos 60 dias
+    data_hora_partida = fake.date_time_between(start_date='now', end_date='+60d')
+    
+    # A duração da viagem pode variar de 1 a 12 horas
+    duracao_viagem = timedelta(hours=random.randint(1, 12))
+    
+    # A data de chegada é a data de partida mais a duração da viagem
+    data_hora_chegada = data_hora_partida + duracao_viagem
+    
+    # Adicionar o horário à coleção de horários se for único
+    if (data_hora_chegada, data_hora_partida) not in horarios:
+        horarios.add((data_hora_chegada, data_hora_partida))
+        inserir_dados("Horario", (data_hora_chegada, data_hora_partida))
 
 # Função para carregar marcas de carros de um arquivo CSV
 def carregar_marcas(marcas_carros_test):
@@ -96,7 +110,7 @@ while len(veiculos_gerados) < 10000:  # Gerar 10000 registros de veículos únic
     modelo = random.choice(modelos_carro)  # Escolher um modelo de carro aleatório
     ano = random.randint(1900, 2024)  # Gerar um ano de fabricação aleatório entre 2010 e 2023
     status_vei = random.choice(["disponivel", "em manutencao"])  # Escolher um status aleatório
-    capacidade = 60  # Gerar uma capacidade aleatória entre 1 e 60
+    capacidade = 65  # Gerar uma capacidade aleatória entre 1 e 60
     
     veiculo = f"{marca} {modelo}"  # Concatenar marca e modelo do veículo
     
@@ -175,14 +189,14 @@ for _ in range(1000000):  # Altere o valor dentro do range para o número deseja
         cur.execute("SELECT data_hora_chegada, data_hora_partida, nome_cidade_origem, nome_cidade_destino FROM Disponibilidade ORDER BY RANDOM() LIMIT 1")
         data_hora_chegada, data_hora_partida, nome_cidade_origem, nome_cidade_destino = cur.fetchone()
 
-        # Gerar um número de assento aleatório entre 1 e 50
-        assento = randint(1, 50)
+        # Gerar um número de assento aleatório entre 1 e 650
+        assento = randint(1, 65)
 
         # Escolher um status de compra aleatório entre "confirmado", "cancelado" e "realizado"
         status_ag = choice(["confirmado", "cancelado", "realizado"])
 
         # Verificar se essa combinação de dados já existe na tabela Compra
-        cur.execute("SELECT COUNT(*) FROM Compra WHERE cpf = %s AND data_hora_chegada = %s AND data_hora_partida = %s", (cpf_cliente, data_hora_chegada, data_hora_partida))
+        cur.execute("SELECT COUNT(*) FROM Compra WHERE cpf = %s AND data_hora_chegada = %s AND data_hora_partida = %s AND assento = %s", (cpf_cliente, data_hora_chegada, data_hora_partida, assento))
         if cur.fetchone()[0] == 0:  # Se não houver registros com essa combinação de dados
             tentativas_compra += 1
             # Inserir os dados na tabela Compra
