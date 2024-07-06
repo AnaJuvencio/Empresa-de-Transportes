@@ -7,7 +7,9 @@ Compra - 994.584 linhas\
 Veiculos - .10.000 linhas\
 Rotas - 9.998 linhas\
 Horario - 10.000 linhas\
-Cidade - 7.171 linhas
+Cidade - 7.171 linhas\\
+
+Tamanho do BD: 33.084 KB
 
 # Inserção de Dados em Banco de Dados PostgreSQL
 
