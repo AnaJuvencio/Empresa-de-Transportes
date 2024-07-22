@@ -1,0 +1,30 @@
+-- Consulta 1
+SELECT Cliente.*
+FROM Cliente
+JOIN Compra ON Cliente.CPF = Compra.CPF
+WHERE Cliente.Nome ILIKE ‘<letras>%’
+AND data_hora_partida BETWEEN ‘X’ AND ‘Y’
+ORDER BY nome;
+
+-- Consulta 1 otimizada
+SELECT Cliente.*
+FROM Cliente
+WHERE Cliente.Nome ILIKE ‘<letras>%’
+AND Cliente.CPF IN (SELECT Compra.CPF FROM Compra WHERE data_hora_partida BETWEEN 'X' AND ‘Y’')
+ORDER BY nome;
+
+-- Consulta 2
+
+SELECT Cliente.*
+FROM Compra
+JOIN Cliente ON Cliente.CPF = Compra.CPF
+WHERE Compra.Nome_Cidade_Destino = 'Recife' AND DATE(Compra.Data_Hora_Chegada) = '2024-08-04';
+
+-- Consulta 2 otimizada
+CREATE INDEX idx_compra_cidade_data ON compra (nome_cidade_destino, data_hora_chegada);
+
+SELECT Cliente.*
+FROM Compra
+JOIN Cliente ON Cliente.CPF = Compra.CPF
+WHERE Compra.Nome_Cidade_Destino = 'Recife' AND Data_Hora_Chegada >= '2024-08-04 00:00:00'
+    AND Data_Hora_Chegada < '2024-08-05 00:00:00';
