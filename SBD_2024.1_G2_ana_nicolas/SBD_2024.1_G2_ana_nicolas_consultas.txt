@@ -1,0 +1,50 @@
+-- Consulta 1
+CREATE OR REPLACE FUNCTION get_consulta_1(
+    _letras VARCHAR, 
+    p_start_date DATE, 
+    p_end_date DATE
+)
+RETURNS TABLE (
+    cpf VARCHAR,
+    nome VARCHAR,
+    endereco VARCHAR,
+    telefone VARCHAR,
+    email VARCHAR
+) AS $$
+BEGIN
+    RETURN QUERY
+    EXECUTE 
+    'SELECT Cliente.*
+FROM Cliente
+WHERE Cliente.Nome ILIKE $1 || ''%''
+AND Cliente.CPF IN (SELECT Compra.CPF FROM Compra WHERE data_hora_partida BETWEEN $2 AND $3)
+ORDER BY nome;'
+    USING _letras, p_start_date, p_end_date;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Consulta 2
+CREATE OR REPLACE FUNCTION get_consulta_2(
+    _cidade VARCHAR, 
+    p_start_date DATE, 
+    p_end_date DATE
+)
+RETURNS TABLE (
+    cpf VARCHAR,
+    nome VARCHAR,
+    endereco VARCHAR,
+    telefone VARCHAR,
+    email VARCHAR
+) AS $$
+BEGIN
+    RETURN QUERY
+    EXECUTE 
+    '
+SELECT Cliente.*
+FROM Compra
+JOIN Cliente ON Cliente.CPF = Compra.CPF
+WHERE Compra.Nome_Cidade_Destino = $1 AND Data_Hora_Chegada >= $2
+    AND Data_Hora_Chegada < $3'
+    USING _cidade, p_start_date, p_end_date;
+END;
+$$ LANGUAGE plpgsql;
