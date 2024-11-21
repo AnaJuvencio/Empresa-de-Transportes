@@ -1,4 +1,4 @@
-# sbd-Empresa-de-Transportes
+# Empresa-de-Transportes
 
 Quantidade de linhas por tabela:\
 Cliente - 10.000 linhas\
